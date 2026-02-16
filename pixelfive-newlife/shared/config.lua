@@ -32,4 +32,4 @@ Config.BurgerMenuOpties = {
 
 Config.SluitMenuOptie = { title = 'Sluiten', description = 'Sluit menu', icon = 'fa-solid fa-xmark' }
 
-Config.RateLimit = 5
+Config.RateLimit = 10
