@@ -11,14 +11,6 @@ RegisterNetEvent('pixelflivedeflopper:newlife:requestMenu', function(isPolice)
     local xPlayer = ESX.GetPlayerFromId(src)
     if not xPlayer then return end
 
-    local ped = GetPlayerPed(src)
-    if not ped or ped == 0 then return end
-
-    if not IsEntityDead(ped) then
-        TriggerClientEvent('pixelflivedeflopper:notify', src, "Je bent niet dood.", "error")
-        return
-    end
-
     local now = GetGameTimer()
     if lastNewlife[src] and (now - lastNewlife[src] < Config.RateLimit * 1000) then
         DropCheater(src, "Rate limit overtreden")
@@ -39,15 +31,8 @@ RegisterNetEvent('pixelflivedeflopper:newlife:teleport', function(index, isPolic
     local xPlayer = ESX.GetPlayerFromId(src)
     if not xPlayer then return end
 
-    local ped = GetPlayerPed(src)
-    if not IsEntityDead(ped) then
-        DropCheater(src, "Teleport zonder dood te zijn")
-        return
-    end
-
     local menu = isPolice and Config.PolitieMenuOpties or Config.BurgerMenuOpties
     local option = menu[index]
-
     if not option then
         DropCheater(src, "Ongeldige teleport index")
         return
