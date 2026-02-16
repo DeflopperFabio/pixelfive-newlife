@@ -1,40 +1,67 @@
 ESX = exports['es_extended']:getSharedObject()
 
-function dropPlayer(src, reason)
-    DropPlayer(src, reason or "Deflopper is je te slim af!")
+local lastNewlife = {}
+
+local function DropCheater(src, reason)
+    DropPlayer(src, "Deflopper is je te slim af! " .. reason)
 end
 
-RegisterNetEvent('pixelflivedeflopper:dropPlayer')
-AddEventHandler('pixelflivedeflopper:dropPlayer', function(reason)
-    local src = source
-    dropPlayer(src, reason)
-end)
-
-RegisterNetEvent('pixelflivedeflopper:requestRevive', function()
+RegisterNetEvent('pixelflivedeflopper:newlife:requestMenu', function(isPolice)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
-    if not xPlayer then
-        DropPlayer(src, "Deflopper is je te slim af!")
-        return
-    end
+    if not xPlayer then return end
 
     local ped = GetPlayerPed(src)
-    if not ped or ped == 0 then
-        DropPlayer(src, "Deflopper is je te slim af!")
+    if not ped or ped == 0 then return end
+
+    if not IsEntityDead(ped) then
+        TriggerClientEvent('pixelflivedeflopper:notify', src, "Je bent niet dood.", "error")
         return
     end
 
-    TriggerClientEvent(Config.Revivetrigger, src, { revive = true })
+    local now = os.time()
+    if lastNewlife[src] and (now - lastNewlife[src] < Config.RateLimit) then
+        DropCheater(src, "Rate limit overtreden")
+        return
+    end
+    lastNewlife[src] = now
+
+    if isPolice and xPlayer.job.name ~= Config.Politiejob then
+        DropCheater(src, "Probeerde politie newlife zonder job")
+        return
+    end
+
+    TriggerClientEvent('pixelflivedeflopper:newlife:openMenu', src, isPolice)
 end)
 
-RegisterNetEvent('pixelflivedeflopper:clearInventory')
-AddEventHandler('pixelflivedeflopper:clearInventory', function()
+RegisterNetEvent('pixelflivedeflopper:newlife:teleport', function(index, isPolice)
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
-    if not xPlayer then dropPlayer(src, "Deflopper is je te slim af!") return end
-    if #xPlayer.inventory > 100 then dropPlayer(src, "Deflopper is je te slim af! Exploit!") return end
-    for i = #xPlayer.inventory, 1, -1 do
-        local item = xPlayer.inventory[i]
-        if item.count > 0 then xPlayer.setInventoryItem(item.name, 0) end
+    if not xPlayer then return end
+
+    local ped = GetPlayerPed(src)
+    if not IsEntityDead(ped) then
+        DropCheater(src, "Teleport zonder dood te zijn")
+        return
     end
+
+    local menu = isPolice and Config.PolitieMenuOpties or Config.BurgerMenuOpties
+    local option = menu[index]
+    if not option then
+        DropCheater(src, "Ongeldige teleport index")
+        return
+    end
+
+    TriggerClientEvent('pixelflivedeflopper:newlife:doTeleport', src, option.coords, isPolice)
+
+    if (isPolice and Config.Politieclearloadout) or (not isPolice and Config.Burgerclearloadout) then
+        for i=#xPlayer.inventory,1,-1 do
+            local item = xPlayer.inventory[i]
+            if item.count > 0 then
+                xPlayer.setInventoryItem(item.name, 0)
+            end
+        end
+    end
+
+    TriggerClientEvent(Config.Revivetrigger, src, {revive = true})
 end)
