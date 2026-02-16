@@ -10,12 +10,20 @@ AddEventHandler('pixelflivedeflopper:dropPlayer', function(reason)
     dropPlayer(src, reason)
 end)
 
-RegisterNetEvent('pixelflivedeflopper:requestRevive')
-AddEventHandler('pixelflivedeflopper:requestRevive', function(coords)
+RegisterNetEvent('pixelflivedeflopper:requestRevive', function()
     local src = source
     local xPlayer = ESX.GetPlayerFromId(src)
-    if not xPlayer then dropPlayer(src, "Deflopper is je te slim af!") return end
-    if type(coords) ~= 'vector3' then dropPlayer(src, "Deflopper is je te slim af! Ongeldige coords!") return end
+    if not xPlayer then
+        DropPlayer(src, "Deflopper is je te slim af!")
+        return
+    end
+
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then
+        DropPlayer(src, "Deflopper is je te slim af!")
+        return
+    end
+
     TriggerClientEvent(Config.Revivetrigger, src, { revive = true })
 end)
 
